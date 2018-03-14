@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform, TextInput, Picker, TouchableHighlight, ScrollView, FlatList, Button } from 'react-native';
+import { StyleSheet, Text, View, Platform, TextInput, Picker, TouchableHighlight, TouchableOpacity, ScrollView, FlatList, Button } from 'react-native';
 
 class StatusBar extends React.Component{
   render(){
@@ -54,9 +54,7 @@ class WorkLogger extends React.Component {
   }
 
   handleDeleteLog = (indexValue) => {
-    alert(indexValue)
     let array = this.state.logs
-    //let splicedArray = array.splice(indexValue, 1)
     this.setState({
       totalHours: this.state.totalHours - Number.parseFloat(array[indexValue].duration),
       logs: array.filter( (item, index) => index !== indexValue)
@@ -67,7 +65,6 @@ class WorkLogger extends React.Component {
     return (
       <View style={styles.body}>
         <NewLogForm handleAddLog = {this.handleAddLog} />
-
         <LogsSection
           logs = {this.state.logs}
           totalHours = {this.state.totalHours}
@@ -142,21 +139,61 @@ class NewLogForm extends React.Component {
 };
 
 class LogsSection extends React.Component {
-  
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      endIndex: 2
+    };
+  }
+
+  showMore() {
+    this.setState({
+      endIndex: Number(this.state.endIndex) + 3
+    })
+  }
+
+  renderSeparator = () => {
+    return (
+      <View
+        style={{
+          height: 1,
+          width: "100%",
+          backgroundColor: "#CED0CE"
+        }}
+      />
+    );
+  };
+
+  renderFooter()
+  {
+    return (
+      <View>
+        <TouchableOpacity
+            onPress = { ()=>this.showMore() } >
+          <Text>Show More</Text>
+        </TouchableOpacity>              
+      </View>
+    )
+  }
+
   render() {
-    let logArray = this.props.logs
     return (
       <View style = {styles.logSection}>
-        <Text style={{fontSize: 25}}>Logs</Text>
-        <Text>Total log for the day: {this.props.totalHours} hours</Text>
+        <View style = {{backgroundColor: 'powderblue', padding: 5}}>
+          <Text style = {{fontSize: 25, marginLeft: 5}}>Logs</Text>
+          <Text style = {{marginLeft: 5}}>Total log for the day: {this.props.totalHours} hours</Text>
+        </View>
         <FlatList
+            ItemSeparatorComponent = { this.renderSeparator.bind(this) }
+            ListFooterComponent = { this.renderFooter.bind(this) }
             style = {styles.list}
-            data = {this.props.logs}
+            data = {this.props.logs.filter( (item, index) => index <= this.state.endIndex)}
             keyExtractor = {(item, index) => index}
             renderItem = {({ item, index }) => 
               <View style={styles.item}>
                 <View style={{flexDirection: 'row', flexWrap:'wrap', marginLeft: 10}}>
-                  <Text style={{fontSize: 18}}>{item.duration}h - {item.project}</Text>
+                  <Text style={{fontSize: 18}}>{Number(item.duration).toFixed(1)}h - {item.project}</Text>
                   <TouchableHighlight
                       style = {{marginTop: 3}}
                       onPress = {()=>this.props.handleDeleteLog(index)}
@@ -187,7 +224,7 @@ export default class App extends React.Component {
 
 const styles = StyleSheet.create({
   header: {
-    height: 60,
+    height: 55,
     backgroundColor: 'powderblue',
     alignItems: 'center',
     justifyContent: 'center',
@@ -205,13 +242,13 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 5,
-    height: 40,
+    height: 35,
     borderColor: '#e2e2e2',
     borderWidth: 1,
     borderRadius: 5,
   },
   picker: {
-    height: 40,
+    height: 38,
     borderRadius: 5,
     borderWidth: 1,
     borderColor: '#e2e2e2',
@@ -237,14 +274,10 @@ const styles = StyleSheet.create({
   },
   logSection: {
     marginTop: 10,
-    borderTopWidth: 2,
-    borderColor: '#e2e2e2',
   },
   list: {
   },
   item: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
     padding: 5
   },
 });
