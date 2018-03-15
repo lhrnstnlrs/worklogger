@@ -63,14 +63,15 @@ class WorkLogger extends React.Component {
 
   render() {
     return (
-      <View style={styles.body}>
+      <ScrollView style={styles.body}>
         <NewLogForm handleAddLog = {this.handleAddLog} />
         <LogsSection
           logs = {this.state.logs}
           totalHours = {this.state.totalHours}
-          handleDeleteLog = {this.handleDeleteLog} />
+          handleDeleteLog = {this.handleDeleteLog}
+          displaySize = {this.state.displaySize} />
 
-      </View>
+      </ScrollView>
     );
   }
 };
@@ -126,12 +127,12 @@ class NewLogForm extends React.Component {
             placeholderTextColor = "#D6D6D6"
             onChangeText = {this.updateRemarksValue} />
 
-        <TouchableHighlight
+        <TouchableOpacity
             style = {styles.button}
             onPress = {()=>this.props.handleAddLog(this.state.durationValue, this.state.projectValue, this.state.remarksValue)}
             underlayColor = '#fff' >
             <Text style = {styles.buttonText}>Add Log</Text>
-        </TouchableHighlight>
+        </TouchableOpacity>
       </ScrollView>
       
     );
@@ -143,14 +144,30 @@ class LogsSection extends React.Component {
     super(props);
 
     this.state = {
-      endIndex: 2
+      displayIndex: 2
     };
   }
 
+  deleteLog(index) {
+    if(this.props.logs.length - 1 === 3) {
+      this.setState({
+        displayIndex: 2
+      })
+    }
+    this.props.handleDeleteLog(index)
+  }
+
   showMore() {
-    this.setState({
-      endIndex: Number(this.state.endIndex) + 3
-    })
+    if((this.state.displayIndex + 3) < this.props.logs.length) {
+      this.setState({
+        displayIndex: this.state.displayIndex + 3
+      })
+    } else {
+      this.setState({
+        displayIndex: this.props.logs.length - 1
+      })
+    }
+    
   }
 
   renderSeparator = () => {
@@ -167,39 +184,43 @@ class LogsSection extends React.Component {
 
   renderFooter()
   {
-    return (
-      <View>
-        <TouchableOpacity
-            onPress = { ()=>this.showMore() } >
-          <Text>Show More</Text>
-        </TouchableOpacity>              
-      </View>
-    )
+    if((this.props.logs.length <= 3) || ((this.state.displayIndex + 1) >= this.props.logs.length)) {
+      return null
+    } else {
+      return (
+        <View>
+          <TouchableOpacity
+              style = {{backgroundColor: 'powderblue', alignItems: 'center'}}
+              onPress = { ()=>this.showMore() } >
+            <Text>Show More</Text>
+          </TouchableOpacity>              
+        </View>
+      )
+    }
   }
 
   render() {
     return (
       <View style = {styles.logSection}>
         <View style = {{backgroundColor: 'powderblue', padding: 5}}>
-          <Text style = {{fontSize: 25, marginLeft: 5}}>Logs</Text>
+          <Text style = {{fontSize: 20, marginLeft: 5}}>Logs</Text>
           <Text style = {{marginLeft: 5}}>Total log for the day: {this.props.totalHours} hours</Text>
         </View>
         <FlatList
             ItemSeparatorComponent = { this.renderSeparator.bind(this) }
             ListFooterComponent = { this.renderFooter.bind(this) }
-            style = {styles.list}
-            data = {this.props.logs.filter( (item, index) => index <= this.state.endIndex)}
+            data = {this.props.logs.filter( (item, index) => index <= this.state.displayIndex)}
             keyExtractor = {(item, index) => index}
             renderItem = {({ item, index }) => 
               <View style={styles.item}>
                 <View style={{flexDirection: 'row', flexWrap:'wrap', marginLeft: 10}}>
-                  <Text style={{fontSize: 18}}>{Number(item.duration).toFixed(1)}h - {item.project}</Text>
-                  <TouchableHighlight
-                      style = {{marginTop: 3}}
-                      onPress = {()=>this.props.handleDeleteLog(index)}
+                  <Text style={{fontSize: 16}}>{Number(item.duration).toFixed(1)}h - {item.project}</Text>
+                  <TouchableOpacity
+                      style = {{marginTop: 3, flex: 2}}
+                      onPress = {()=>this.deleteLog(index)}
                       underlayColor = '#fff' >
                       <Text style={{color: 'red'}}>  [ Delete ]</Text>
-                  </TouchableHighlight>
+                  </TouchableOpacity>
                 </View>
                 <Text style={{marginLeft: 10}}>{item.remarks}</Text>
               </View>
@@ -239,6 +260,7 @@ const styles = StyleSheet.create({
   },
   body: {
     marginTop: 10,
+    marginBottom: 10
   },
   input: {
     padding: 5,
@@ -264,7 +286,6 @@ const styles = StyleSheet.create({
     borderColor: '#fff'
   },
   buttonText:{
-    color: '#fff',
     fontSize: 16,
     textAlign: 'center',
   },
@@ -274,8 +295,6 @@ const styles = StyleSheet.create({
   },
   logSection: {
     marginTop: 10,
-  },
-  list: {
   },
   item: {
     padding: 5
